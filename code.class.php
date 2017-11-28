@@ -12,11 +12,11 @@ class code
     public $word = "";
     public $color = "";
 
-    function __construct($width, $height)
+    function __construct($width=180, $height=40)
     {
         $this->width = $width;
         $this->height = $height;
-        $this->img = imagecreatetruecolor($width, $height);
+        $this->img = imagecreatetruecolor($this->width, $this->height);
     }
 
     function getcolor($type = "1")  //给颜色赋值
@@ -64,7 +64,4 @@ class code
     }
 }
 $image=new code(180,40);
-//$image->start();
-$this->getcolor();
-$this->imageFill();
-$this->imagefont();
+$image->start();
