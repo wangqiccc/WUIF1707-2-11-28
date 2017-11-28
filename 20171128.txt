@@ -1,0 +1,197 @@
+//上传文件
+<?php
+class Upload{
+    public $data;//接受上传文件
+    public $type=["image/png","image/jpg","image/jpeg"];
+    public $filename="";
+    public $pathname="";
+    public $fullname="";
+    function __construct($f)
+    {
+        $this->data=$_FILES[$f];
+        $this->size=1024 * 1024 * 10;
+    }
+    function getfilename(){
+        $arr=explode(".",$this->data["name"]);
+        $huizhui=array_pop($arr);
+        $this->filename=md5(time()).".".$huizhui;
+    }
+    function getpathname(){
+        if(!is_dir("./upload")){
+            mkdir("./upload");
+        }
+        $this->pathname="./upload"."/".date("Y-m-d")."/";
+        if(!is_dir($this->pathname)){
+            mkdir($this->pathname);
+        }
+        $this->fullname=$this->pathname.$this->filename;
+    }
+    function check(){
+        if($this->data["size"]>$this->size){
+            return false;
+        }
+        if(!in_array($this->data["type"],$this->type)){
+            return false;
+        }
+        return true;
+    }
+    function move(){
+        if(is_uploaded_file($this->data["tmp_name"])){
+            move_uploaded_file($this->data["tmp_name"],$this->fullname);
+            echo $this->fullname;
+        }
+    }
+    function upload(){
+        $this->getfilename();
+        $this->getpathname();
+        if($this->check()){
+            $this->move();
+        };
+    }
+}
+
+$upload=new Upload("f");
+$upload->upload();
+
+
+//2、
+<?php
+header("Content-Type:text/html;charset=utf-8");
+class db{
+    public $host="localhost";
+    public $username="root";
+    public $password="";
+    public $dbname="school";
+    public $table="";
+    public $db="";
+    function __construct($table)
+    {
+        $this->db=new mysqli($this->host,$this->username,$this->password,$this->dbname);
+        $this->table=$table;
+        if($this->db->errno){
+          echo "数据库有误".$this->db->error;
+          exit();
+        }
+    }
+    function selectOne($filed="*",$where){
+        $sql="set names utf8";
+        $this->db->query($sql);
+        $sql=" SELECT ".$filed." FROM ".$this->table." WHERE ".$where;
+        $r=$this->db->query($sql);
+        $r=$r->fetch_array(MYSQLI_ASSOC);
+        return $r;
+    }
+    function selectAll($filed="*",$where="1"){
+        $sql="set names utf8";
+        $this->db->query($sql);
+        $sql=" SELECT ".$filed." FROM ".$this->table." WHERE ".$where;
+        $r=$this->db->query($sql);
+        $r=$r->fetch_all(MYSQLI_ASSOC);
+        return $r;
+    }
+    function insert($arr){
+        $keys="";
+        $vals="";
+        foreach($arr as $k=>$v){
+            $keys.="`".$k."`".",";
+            $vals.="'".$v."'".",";
+        };
+        $keys=substr($keys,0,strrpos($keys,","));
+        $vals=substr($vals,0,strrpos($vals,","));
+        $sql="set names utf8";
+        $this->db->query($sql);
+        $sql=" INSERT INTO" .$this->table."(". $keys .")VALUES(". $vals .")";
+        $this->db->query($sql);
+        return $this->db->affected_rows;
+    }
+    function delete($pos){
+        $sql="DELETE FROM ".$this->table." WHERE ".$pos;
+        $this->db->query($sql);
+        return $this->db->affected_rows;
+    }
+    function update($filed,$pos){
+        $sql="UPDATE ".$this->table." SET ".$filed." WHERE ".$pos;
+        $this->db->query($sql);
+        return $this->db->affected_rows;
+    }
+    function close(){
+        $this->db->close();
+    }
+}
+$db=new db("student");
+var_dump($db->selectOne("*","sid=2"));
+var_dump($db->selectAll("*","1"));
+
+//3、
+
+<?php
+
+class code
+{
+    public $width = "";
+    public $height = "";
+    public $img = "";
+    public $color;
+    public $str;
+    public $len;
+    public $word="";
+    function __construct($width, $height)
+    {
+        $this->width = $width;
+        $this->height = $height;
+        $this->img = imagecreatetruecolor(width, height);
+    }
+
+    function getcolor($type = "l")
+    {
+        $this->img = $GLOBALS["img"];
+        if ($type == "l") {
+            $this->color = imagecolorallocate($this->img, mt_rand(130, 255), mt_rand(130, 255), mt_rand(130, 255));
+        } else {
+            $this->color = imagecolorallocate($this->img, mt_rand(0, 130), mt_rand(0, 130), mt_rand(0, 130));
+        }
+        imagefill($this->img, 0, 0, getcolor());
+        return $this->color;
+    }
+
+    function drawline()
+    {
+        for ($i = 0; $i < 10; $i++) {
+            imageline($this->img, mt_rand(0, $this->width), mt_rand(0, $this->height), mt_rand(0, $this->width), mt_rand(0, $this->height), getcolor());
+        }
+    }
+
+    function drawcir()
+    {
+        for ($i = 0; $i < 100; $i++) {
+            imagesetpixel($this->img, mt_rand(0, $this->width), mt_rand(0, $this->height), getcolor());
+        }
+    }
+    function  drawwb(){
+        $this->str="qwertyupasdfghjklzxcvbnm23456789QWERTYUIOPASDFGHJKLZXCVBNM";
+       $this->len=strlen($this->str);
+        for($i=0;$i<4;$i++){
+            $pos=mt_rand(0,$this->len-1);
+            $letter=substr($this->str,$pos,1);//从某个位置截取一定的长度
+            $this->word.=strtoupper($letter);//不区分大小写
+            imagettftext($this->img,mt_rand(25,35),mt_rand(-10,10),$i*40+20,mt_rand(30,40),getcolor("d"),"../static/font/font.TTF",$letter);
+        }
+        session_start();
+        $_SESSION["code"]=$this->word;
+        header("Content-type:image/png");
+        imagepng($this->img);
+        imagedestroy($this->img);
+    }
+}
+
+$code = new code(180, 40);
+$code->getcolor();
+$code->drawline();
+$code->drawcir();
+$code->drawwb();
+
+
+
+
+
+
