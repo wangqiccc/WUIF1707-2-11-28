@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .container{
+            width:600px;
+            height:400px;
+            border:1px solid red;
+            margin:0 auto;
+        }
+        .input:not([type=button]){
+            display: block;
+        }
+        #showarea{
+            width:100%;
+            background: #ccc;
+        }
+        #showarea img{
+            display: block;
+            width:100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input type="file" name="myfile">
+        <div id="showarea"></div>
+        <progress min="0" max="100" value="0"></progress>
+        <input type="button" id="btn" value="上传">
+        <input type="hidden" name="image">
+    </div>
+</body>
+<script>
+    var fileobj=document.querySelector("[name=myfile]");
+    var showobj=document.querySelector("#showarea");
+    var progressobj=document.querySelector("progress");
+    var btnobj=document.querySelector("#btn");
+    var hiddenobj=document.querySelector("[name=image]");
+    var maxSize=1024*1024*10;
+
+    var typeArr=/^image\/(jpe?g|png|gif)$/; //正则为了判断是否为图片及图片格式
+    fileobj.onchange=function(){    //当选择按钮发生改变的时候
+        var file=this.files[0];     //保存了上传文件
+        var r=check(file);
+        if(!r){
+            this.value="";
+            return false;
+        }
+        var fr=new FileReader();
+        fr.readAsDataURL(file);
+        fr.onload=function () {
+            var img=new Image();
+            img.src=this.result;
+            showobj.appendChild(img);
+        }
+    };
+
+    function check(file){
+        if(file.size>maxSize){
+            alert("文件大小超过10M");
+            return false;
+        }
+        if(!typeArr.test(file.type)){
+            alert("文件类型不符合");
+            return false;
+        }
+        return true;
+    }
+
+    btnobj.onclick=function(){
+        var file=fileobj.files[0];
+        var fd=new FormData();
+        fd.append("f",file);
+        var xhr=new XMLHttpRequest();
+        xhr.upload.onprogress=function(e){
+            var bili=e.loaded/e.total;
+            progressobj.value=bili*100;
+        }.bind(this);
+        xhr.open("post","upload.class.php");
+        xhr.send(fd);
+        xhr.onload=function(){
+            var r=xhr.response;
+            hiddenobj.src=r;
+        }.bind(this);
+    }.bind(this);       //改变指针
+
+
+
+</script>
+</html>
